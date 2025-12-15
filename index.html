@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>おみくじ</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: "Hiragino Sans", "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(255, 221, 166, 0.35), transparent 40%),
+        radial-gradient(circle at 80% 0%, rgba(255, 194, 203, 0.35), transparent 40%),
+        linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    body {
+      margin: 0;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 24px;
+      width: min(480px, 90vw);
+      backdrop-filter: blur(4px);
+    }
+
+    h1 {
+      margin-top: 0;
+      text-align: center;
+      letter-spacing: 0.1em;
+      font-size: 1.5rem;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      margin: 24px 0 12px;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(120deg, #ff7a7a, #ffaf7b);
+      box-shadow: 0 8px 18px rgba(255, 122, 122, 0.35);
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(255, 122, 122, 0.45);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 12px rgba(255, 122, 122, 0.35);
+    }
+
+    .result {
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .fortune-name {
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .message {
+      margin: 8px 0 0;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .note {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: #555;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="card" aria-live="polite">
+    <h1>今日の運勢</h1>
+    <div class="button-row">
+      <button id="draw">おみくじを引く</button>
+    </div>
+    <div class="result" id="result">
+      <p class="fortune-name" id="fortune-name">まだ引いていません</p>
+      <p class="message" id="fortune-message">ボタンを押して今日の運勢をチェック！</p>
+    </div>
+    <p class="note">結果と一言はランダムで表示されます。</p>
+  </main>
+
+  <script>
+    const fortunes = [
+      {
+        name: "大吉",
+        messages: [
+          "驚くほど良い流れ。思い切った挑戦が吉！",
+          "周りからの助けに恵まれる一日。感謝を忘れずに。",
+          "最高のスタートダッシュが切れそう。笑顔で進もう。"
+        ]
+      },
+      {
+        name: "吉",
+        messages: [
+          "穏やかな幸運が続きそう。小さな幸せを集めてみて。",
+          "やさしい気持ちで過ごせば運気アップ。",
+          "コツコツ取り組むことが成功への近道。"
+        ]
+      },
+      {
+        name: "中吉",
+        messages: [
+          "集中力が高まる日。やりたいことを進めるチャンス。",
+          "人との会話にヒントあり。積極的に話しかけてみよう。",
+          "小さな勝利を積み重ねて大きな成果につなげよう。"
+        ]
+      },
+      {
+        name: "小吉",
+        messages: [
+          "ちょっとした工夫が運気を引き寄せる。",
+          "肩の力を抜いてリラックスすると良い流れに。",
+          "いつもと違う道を選ぶと新しい発見があるかも。"
+        ]
+      },
+      {
+        name: "末吉",
+        messages: [
+          "焦らず一歩ずつ。時間が味方してくれる日。",
+          "背伸びは禁物。等身大の自分で大丈夫。",
+          "静かな場所で考えをまとめると良いアイデアが生まれる。"
+        ]
+      },
+      {
+        name: "凶",
+        messages: [
+          "慎重に行動すればトラブル回避。無理はしないで。",
+          "周りへの感謝を意識すると流れが変わるかも。",
+          "休息を大切に。心と体を整える日。"
+        ]
+      }
+    ];
+
+    const drawButton = document.getElementById("draw");
+    const fortuneNameEl = document.getElementById("fortune-name");
+    const fortuneMessageEl = document.getElementById("fortune-message");
+
+    function pickRandom(array) {
+      return array[Math.floor(Math.random() * array.length)];
+    }
+
+    function drawFortune() {
+      const fortune = pickRandom(fortunes);
+      const message = pickRandom(fortune.messages);
+
+      fortuneNameEl.textContent = fortune.name;
+      fortuneMessageEl.textContent = message;
+    }
+
+    drawButton.addEventListener("click", drawFortune);
+  </script>
+</body>
+</html>
