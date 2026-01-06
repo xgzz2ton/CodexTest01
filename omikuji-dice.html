@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>百面ダイスおみくじ</title>
+  <style>
+    :root {
+      font-family: "Hiragino Sans", "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(255, 195, 160, 0.35), transparent 40%),
+        radial-gradient(circle at 80% 0%, rgba(255, 235, 186, 0.3), transparent 40%),
+        linear-gradient(135deg, #fdf7f1 0%, #f2e6da 100%);
+      color: #2d1b15;
+      min-height: 100vh;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 28px 14px;
+    }
+
+    .scene { position: relative; width: min(520px, 100%); }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 18px;
+      box-shadow: 0 16px 38px rgba(0, 0, 0, 0.08);
+      padding: 26px 24px 22px;
+      backdrop-filter: blur(6px);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -20% -10%;
+      background: radial-gradient(circle at 50% 20%, rgba(255, 122, 122, 0.08), transparent 35%),
+        radial-gradient(circle at 10% 60%, rgba(255, 191, 118, 0.1), transparent 35%),
+        radial-gradient(circle at 90% 80%, rgba(124, 201, 255, 0.08), transparent 35%);
+      z-index: 0;
+      opacity: 0.9;
+      transition: opacity 200ms ease;
+    }
+
+    header { position: relative; z-index: 1; text-align: center; margin-bottom: 12px; }
+
+    h1 { margin: 0; font-size: 1.7rem; letter-spacing: 0.08em; }
+    .subtitle { margin: 6px 0 0; font-size: 0.98rem; color: #6b4c3d; }
+
+    .dice {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      background: #fffaf6;
+      border: 1px dashed rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      padding: 14px 12px;
+      margin: 14px 0;
+    }
+
+    .roll-number { font-size: 2.4rem; font-weight: 800; letter-spacing: 0.08em; color: #e56d43; margin: 2px 0; }
+    .roll-label { margin: 0; color: #7a5a4c; font-size: 0.95rem; }
+
+    .button-row { display: flex; justify-content: center; margin: 10px 0 14px; position: relative; z-index: 1; }
+
+    button {
+      padding: 13px 22px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(120deg, #ff8b6b, #ffa85f);
+      box-shadow: 0 10px 22px rgba(255, 138, 107, 0.35);
+      transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(255, 138, 107, 0.4); filter: brightness(1.02); }
+    button:active { transform: translateY(0); box-shadow: 0 5px 14px rgba(255, 138, 107, 0.32); }
+
+    .result { position: relative; z-index: 1; text-align: center; margin-top: 10px; padding: 12px 10px 6px; }
+    .fortune-name { font-size: 2.1rem; font-weight: 800; margin: 0; color: #d95c3f; letter-spacing: 0.07em; }
+    .message { margin: 10px 0 0; font-size: 1rem; line-height: 1.6; color: #5b4034; min-height: 1.6em; }
+    .note { position: relative; z-index: 1; margin: 18px 0 0; font-size: 0.92rem; color: #6b4c3d; text-align: center; }
+    .meta { font-size: 0.82rem; color: #8a6f5a; margin-top: 6px; }
+
+    .card.effect-extreme { box-shadow: 0 16px 38px rgba(255, 107, 107, 0.45), 0 0 0 1px rgba(255, 107, 107, 0.2); transform: translateY(-2px); animation: glow 1.4s ease-in-out; }
+    .card.effect-extreme::before { opacity: 1; background: radial-gradient(circle at 50% 20%, rgba(255, 87, 134, 0.28), transparent 38%), radial-gradient(circle at 15% 70%, rgba(255, 207, 94, 0.24), transparent 42%), radial-gradient(circle at 85% 80%, rgba(154, 231, 255, 0.2), transparent 42%); }
+
+    .card.effect-bright { box-shadow: 0 14px 30px rgba(255, 165, 79, 0.35), 0 0 0 1px rgba(255, 165, 79, 0.2); transform: translateY(-1px); animation: shimmer 1.4s ease-in-out; }
+    .card.effect-gold { box-shadow: 0 14px 30px rgba(255, 202, 40, 0.3), 0 0 0 1px rgba(255, 202, 40, 0.2); animation: shimmer 1.6s ease-in-out; }
+    .card.effect-bounce { animation: bounce 0.6s ease; }
+    .card.effect-ripple::before { animation: ripple 1.8s ease-out; }
+    .card.effect-wobble { animation: wobble 0.9s ease; }
+
+    .particles { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+    .particle { position: absolute; width: 10px; height: 10px; border-radius: 999px; background: var(--color, #ff9a76); opacity: 0; animation: pop 1s ease-out forwards; }
+
+    @keyframes pop { 0% { transform: translate(-50%, -30%) scale(0.6); opacity: 0.95; } 60% { opacity: 0.9; } 100% { transform: translate(-50%, -160%) scale(0); opacity: 0; } }
+    @keyframes glow { 0% { box-shadow: 0 16px 38px rgba(255, 107, 107, 0.2), 0 0 0 1px rgba(255, 107, 107, 0.1); } 50% { box-shadow: 0 16px 38px rgba(255, 107, 107, 0.52), 0 0 0 2px rgba(255, 107, 107, 0.24); } 100% { box-shadow: 0 16px 38px rgba(255, 107, 107, 0.2), 0 0 0 1px rgba(255, 107, 107, 0.1); } }
+    @keyframes shimmer { 0% { filter: saturate(1); } 50% { filter: saturate(1.12); } 100% { filter: saturate(1); } }
+    @keyframes bounce { 0% { transform: translateY(-2px) scale(0.98); } 60% { transform: translateY(2px) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
+    @keyframes ripple { 0% { opacity: 0.9; } 100% { opacity: 0.2; } }
+    @keyframes wobble { 0% { transform: rotate(-1deg); } 25% { transform: rotate(1deg); } 50% { transform: rotate(-1deg); } 100% { transform: rotate(0deg); } }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <main class="card" id="card">
+      <header>
+        <h1>百面ダイスおみくじ</h1>
+        <p class="subtitle">1?100の乱数で今日の運勢を決定！</p>
+      </header>
+
+      <section class="dice">
+        <p class="roll-label">今日の出目</p>
+        <div class="roll-number" id="roll-number">--</div>
+        <p class="roll-label">1?100</p>
+      </section>
+
+      <div class="button-row">
+        <button id="draw">おみくじを引く</button>
+      </div>
+
+      <div class="result" id="result">
+        <p class="fortune-name" id="fortune-name">まだ引いていません</p>
+        <p class="message" id="fortune-message">「おみくじを引く」を押してみてね。</p>
+      </div>
+
+      <p class="note">出目に応じてコメントとちょっとした演出が変わります。</p>
+    </main>
+    <div class="particles" id="particles"></div>
+  </div>
+
+  <script>
+    const fortunes = [
+      { min: 1, max: 5, name: "エクストリーム吉", messages: [
+        "今日はフルアクセル！思い切った挑戦が最高の景色を連れてくる。",
+        "勢いが味方する日。直感を信じて飛び込めばドラマが待っている！",
+        "まさに記念日。やりたかったことを全部始めても追い風が吹いてる。"
+      ], effect: "extreme", color: "#ff4d7a", particles: 26 },
+      { min: 6, max: 20, name: "素晴らしい吉", messages: [
+        "周りが拍手してくれそうな好調さ。遠慮せずスポットライトへ。",
+        "ひと工夫が金色に光る日。丁寧さが大きな成果に化けそう。",
+        "運気は快晴。やりたいことリストに一気にチェックを入れよう。"
+      ], effect: "bright", color: "#ffa542", particles: 18 },
+      { min: 21, max: 30, name: "大吉", messages: [
+        "穏やかにして最高。余裕ある判断が未来の褒美を作る。",
+        "嬉しい偶然が重なる予感。肩の力を抜いて笑って過ごそう。",
+        "小さなチャレンジが大きな自信に。楽しみながら一歩前へ。"
+      ], effect: "gold", color: "#ffc833", particles: 16 },
+      { min: 31, max: 50, name: "中吉", messages: [
+        "ゆるやかな追い風。じっくり取り組めば結果はついてくる。",
+        "会話にヒントあり。周りの声を拾うと次の一手が見える。",
+        "段取りを整えると快適。準備に時間をかけて吉。"
+      ], effect: "bounce", color: "#ff9a76", particles: 12 },
+      { min: 51, max: 70, name: "小吉", messages: [
+        "こまめな休憩が吉。リラックスが良い流れを呼び込みそう。",
+        "いつもと違う道を選ぶと小さな発見が待っている。",
+        "背伸びせず、マイペースで。静かな幸運が寄り添ってくる。"
+      ], effect: "ripple", color: "#89c2ff", particles: 10 },
+      { min: 71, max: 90, name: "どっちかというと吉", messages: [
+        "気持ちの持ちようが大事。ポジティブ変換が運気を上げる鍵。",
+        "結果より過程を楽しんで吉。寄り道からいいアイデアが生まれる。",
+        "笑いが運を引き寄せる日。軽い冗談をひとつ用意しておこう。"
+      ], effect: "wobble", color: "#6ecbba", particles: 8 },
+      { min: 91, max: 95, name: "微吉", messages: [
+        "今日は調整日。ゆっくり整えて明日にバトンを渡そう。",
+        "深呼吸してペースダウン。静かな時間がエネルギー補給に。",
+        "大切なのは無理しないこと。こまめな水分補給でリズムをキープ。"
+      ], effect: "ripple", color: "#9aa0b9", particles: 6 },
+      { min: 96, max: 100, name: "逆に吉", messages: [
+        "うまくいかない時こそチャンスの裏側。柔軟にすり抜けよう。",
+        "ネタに変えれば勝ち。転んでもタダでは起きない日。",
+        "予想外を楽しめば吉。肩の力を抜いて、笑い飛ばそう。"
+      ], effect: "wobble", color: "#b07dff", particles: 12 }
+    ];
+
+    const drawButton = document.getElementById("draw");
+    const fortuneNameEl = document.getElementById("fortune-name");
+    const fortuneMessageEl = document.getElementById("fortune-message");
+    const rollNumberEl = document.getElementById("roll-number");
+    const card = document.getElementById("card");
+    const particleLayer = document.getElementById("particles");
+
+    const effects = ["effect-extreme","effect-bright","effect-gold","effect-bounce","effect-ripple","effect-wobble"];
+
+    function pickRandom(array) { return array[Math.floor(Math.random() * array.length)]; }
+
+    function spawnParticles(color, count) {
+      particleLayer.innerHTML = "";
+      const rect = card.getBoundingClientRect();
+      for (let i = 0; i < count; i += 1) {
+        const dot = document.createElement("span");
+        dot.className = "particle";
+        dot.style.setProperty("--color", color);
+        const x = rect.left + rect.width / 2 + (Math.random() - 0.5) * rect.width * 0.8;
+        const y = rect.top + rect.height / 2 + (Math.random() - 0.2) * rect.height * 0.5;
+        dot.style.left = `${x}px`;
+        dot.style.top = `${y}px`;
+        dot.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 360}deg)`;
+        dot.style.animationDelay = `${Math.random() * 0.2}s`;
+        dot.style.width = `${8 + Math.random() * 10}px`;
+        dot.style.height = dot.style.width;
+        particleLayer.appendChild(dot);
+        setTimeout(() => dot.remove(), 1100);
+      }
+    }
+
+    function applyEffect(effectName) {
+      effects.forEach((cls) => card.classList.remove(cls));
+      if (effectName) card.classList.add(`effect-${effectName}`);
+    }
+
+    function rollDice() { return Math.floor(Math.random() * 100) + 1; }
+    function findFortune(roll) { return fortunes.find((f) => roll >= f.min && roll <= f.max) ?? fortunes[fortunes.length - 1]; }
+
+    function drawFortune() {
+      const roll = rollDice();
+      const fortune = findFortune(roll);
+      const message = pickRandom(fortune.messages);
+
+      rollNumberEl.textContent = roll.toString();
+      fortuneNameEl.textContent = fortune.name;
+      fortuneMessageEl.textContent = message;
+
+      applyEffect(fortune.effect);
+      spawnParticles(fortune.color, fortune.particles);
+    }
+
+    drawButton.addEventListener("click", drawFortune);
+  </script>
+</body>
+</html>
